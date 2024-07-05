@@ -6,6 +6,7 @@ use App\DataTables\ProductDataTable;
 use App\Http\Requests\RequestStoreProduct;
 use App\Http\Requests\RequestUpdateProduct;
 use App\Models\Product;
+use App\Models\ProductDetail;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -38,19 +39,34 @@ class ProductController extends Controller
      */
     public function store(RequestStoreProduct $request)
     {
-        $validated = $request->validated() + [
-            'created_at' => now(),
-        ];
+        $validated = $request->validated() + ['created_at' => now()];
+
+        $payloadProductDetail = [];
 
         if ($request->hasFile('image')) {
             $fileName = time() . '.' . $request->image->extension();
             $validated['image'] = $fileName;
 
-            // move file
             $request->image->move(public_path('uploads/images'), $fileName);
         }
 
-        Product::create($validated);
+        $product = Product::create($validated);
+
+        $sizes = $request->input('product_detail.size', []);
+        $quantities = $request->input('product_detail.quantity', []);
+
+        foreach ($sizes as $index => $size) {
+            if (isset($quantities[$index])) {
+                $payloadProductDetail[] = [
+                    'product_id' => 1,
+                    'size' => $size,
+                    'quantity' => $quantities[$index],
+                    'created_at' => now(),
+                ];
+            }
+        }
+
+        $product->productDetails()->createMany($payloadProductDetail);
 
         return redirect(route('products.index'))->with('success', 'Data produk berhasil ditambahkan.');
     }
@@ -74,7 +90,7 @@ class ProductController extends Controller
      */
     public function edit($id)
     {
-        $product = Product::findOrFail($id);
+        $product = Product::with('productDetails:id,product_id,size,quantity')->findOrFail($id);
 
         return view('dashboard.products.edit', compact('product'));
     }
@@ -88,11 +104,9 @@ class ProductController extends Controller
      */
     public function update(RequestUpdateProduct $request, $id)
     {
-        $validated = $request->validated() + [
-            'updated_at' => now(),
-        ];
+        $validated = $request->validated() + ['updated_at' => now()];
 
-        $product = Product::findOrFail($id);
+        $product = Product::with('productDetails')->findOrFail($id);
 
         $validated['image'] = $product->image;
 
@@ -100,10 +114,8 @@ class ProductController extends Controller
             $fileName = time() . '.' . $request->image->extension();
             $validated['image'] = $fileName;
 
-            // move file
             $request->image->move(public_path('uploads/images'), $fileName);
 
-            // delete old file
             $oldPath = public_path('/uploads/images/' . $product->image);
             if (file_exists($oldPath) && $product->image != 'image.png') {
                 unlink($oldPath);
@@ -111,6 +123,44 @@ class ProductController extends Controller
         }
 
         $product->update($validated);
+
+        $sizes = $request->input('product_detail.size', []);
+        $quantities = $request->input('product_detail.quantity', []);
+        $productDetailIds = $request->input('product_detail.id', []);
+
+        $payloadProductDetail = [];
+
+        $incomingDetailIds = [];
+
+        foreach ($sizes as $index => $size) {
+            if (isset($quantities[$index])) {
+                $id = $productDetailIds[$index] ?? null;
+                $incomingDetailIds[] = $id;
+
+                $payloadProductDetail[] = [
+                    'id' => $id,
+                    'product_id' => $product->id,
+                    'size' => $size,
+                    'quantity' => $quantities[$index],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+        }
+
+        ProductDetail::upsert(
+            $payloadProductDetail,
+            ['id'], // Kolom unik
+            ['size', 'quantity', 'updated_at'] // Kolom yang akan diperbarui
+        );
+
+        $existingDetailIds = $product->productDetails->pluck('id')->toArray();
+
+        $detailIdsToDelete = array_diff($existingDetailIds, $incomingDetailIds);
+
+        if (!empty($detailIdsToDelete)) {
+            ProductDetail::whereIn('id', $detailIdsToDelete)->delete();
+        }
 
         return redirect(route('products.index'))->with('success', 'Data produk berhasil diperbarui.');
     }

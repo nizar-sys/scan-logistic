@@ -21,4 +21,14 @@ class Product extends Model
             ->withPivot('size', 'quantity')
             ->withTimestamps();
     }
+
+    public function productDetails()
+    {
+        return $this->hasMany(ProductDetail::class);
+    }
+
+    public function productDetail()
+    {
+        return $this->hasOne(ProductDetail::class);
+    }
 }

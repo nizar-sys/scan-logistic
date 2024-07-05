@@ -15,9 +15,8 @@
                 <div class="card-header bg-transparent border-0 text-dark">
                     <h5 class="mb-0">Formulir Tambah Data Produk</h5>
                 </div>
-                <div class="card-body">
-                    <form action="{{ route('products.store') }}" method="POST" role="form"
-                        enctype="multipart/form-data">
+                <form action="{{ route('products.store') }}" method="POST" role="form" enctype="multipart/form-data">
+                    <div class="card-body">
                         @csrf
 
                         <div class="row">
@@ -48,22 +47,57 @@
 
                         <div class="form-group mb-3">
                             <label for="image">Gambar</label>
-                            <input type="file" class="form-control @error('image') is-invalid @enderror dropify" id="image"
-                                placeholder="Gambar Produk" name="image">
+                            <input type="file" class="form-control @error('image') is-invalid @enderror dropify"
+                                id="image" placeholder="Gambar Produk" name="image">
 
                             @error('image')
                                 <div class="d-block invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
+                        <div class="form-group mb-3">
+                            <label for="">Detail Produk</label>
+                            <div class="table-responsive">
+                                <table id="productDetailTable" class="table table-hover table-borderless">
+                                    <thead>
+                                        <tr style="background: #DDF5FF;">
+                                            <th>Ukuran</th>
+                                            <th>Stok</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <input type="text" class="form-control" placeholder="Ukuran Produk"
+                                                    name="product_detail[size][]" required>
+                                            </td>
+                                            <td>
+                                                <input type="number" class="form-control" placeholder="Stok Produk"
+                                                    name="product_detail[quantity][]" required>
+                                            </td>
+                                            <td>
+                                                <button type="button" class="btn btn-danger remove-row"><i
+                                                        class="fas fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button type="button" id="addRowBtn" class="btn btn-primary btn-sm mt-3"><i
+                                    class="fas fa-plus"></i> Tambah Detail</button>
+                        </div>
+
+                    </div>
+                    <div class="card-footer">
                         <div class="row">
                             <div class="col-6">
-                                <button type="submit" class="btn btn-sm btn-primary">Tambah</button>
+                                <button type="submit" class="btn btn-sm btn-primary">Simpan</button>
                                 <a href="{{ route('products.index') }}" class="btn btn-sm btn-secondary">Kembali</a>
                             </div>
                         </div>
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -78,6 +112,29 @@
                 'remove': 'Remove',
                 'error': 'Ooops, something wrong happended.'
             }
+        });
+
+        $(document).ready(function() {
+            $('#addRowBtn').on('click', function() {
+                const newRow = `
+                    <tr>
+                        <td>
+                            <input type="text" class="form-control" placeholder="Ukuran Produk" name="product_detail[size][]" required>
+                        </td>
+                        <td>
+                            <input type="number" class="form-control" placeholder="Stok Produk" name="product_detail[quantity][]" required>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-danger remove-row"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+                $('#productDetailTable tbody').append(newRow);
+            });
+
+            $(document).on('click', '.remove-row', function() {
+                $(this).closest('tr').remove();
+            });
         });
     </script>
 @endsection

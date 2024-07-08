@@ -50,23 +50,54 @@ class InvoiceController extends Controller
     public function store(RequestStoreInvoice $request)
     {
         $validated = $request->validated();
+        $productsRequest = [];
+
+        foreach ($request->product_id as $key => $product) {
+            $productsRequest[] = [
+                'product_id' => $product,
+                'size' => $request->size[$key],
+                'qty' => $request->qty[$key],
+            ];
+        }
 
         $invoice = Invoice::updateOrCreate(
             ['invoice_number' => $validated['invoice_number']],
             ['marketplace' => $request->marketplace]
         );
 
+        $productIds = array_column($productsRequest, 'product_id');
+        $sizes = array_column($productsRequest, 'size');
+
+        $products = Product::with(['productDetails' => function ($query) use ($sizes) {
+            $query->whereIn('size', $sizes);
+        }])->whereIn('id', $productIds)->get();
         $payloadInvoiceDetail = [];
 
-        foreach ($request->product_id as $key => $product) {
-            $payloadInvoiceDetail[] = [
-                'invoice_id' => $invoice->id,
-                'product_id' => $product,
-                'size' => $request->size[$key],
-                'quantity' => $request->qty[$key],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+        foreach ($productsRequest as $pr) {
+            $product = $products->firstWhere('id', $pr['product_id']);
+            if ($product) {
+                $productDetail = $product->productDetails->firstWhere('size', $pr['size']);
+                if ($productDetail) {
+                    if ($productDetail->quantity >= $pr['qty']) {
+                        $availability = 'tersedia';
+                    } else {
+                        $availability = 'ketersediaan: ' . $productDetail->quantity;
+                    }
+
+                    $payloadInvoiceDetail[] = [
+                        'invoice_id' => $invoice->id,
+                        'product_id' => $pr['product_id'],
+                        'size' => $pr['size'],
+                        'quantity' => $pr['qty'],
+                        'availability' => $availability,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+
+                    $decrementValue = min($productDetail->quantity, $pr['qty']);
+                    $productDetail->decrement('quantity', $decrementValue);
+                }
+            }
         }
 
         InvoiceDetail::insert($payloadInvoiceDetail);

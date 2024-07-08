@@ -115,10 +115,6 @@
                                                     <td>
                                                         <select name="size[]" class="js-example-basic-single" required>
                                                             <option value="">Pilih Ukuran</option>
-                                                            @foreach (['s', 'm', 'l', 'xl', '2xl', '3xl', '4xl', '5xl'] as $size)
-                                                                <option value="{{ $size }}">
-                                                                    {{ strtoupper($size) }}</option>
-                                                            @endforeach
                                                         </select>
                                                     </td>
                                                     <td>
@@ -168,7 +164,8 @@
 
 @section('script')
     <script>
-        const urlRoot = "https://dowear.dimas.co.id";
+        // const urlRoot = "https://dowear.dimas.co.id";
+        const urlRoot = "{{ url('/') }}";
     </script>
     <script>
         $(document).ready(function() {
@@ -190,9 +187,6 @@
                     <td>
                         <select name="size[]" class="js-example-basic-single" required>
                             <option value="">Pilih Ukuran</option>
-                            @foreach (['s', 'm', 'l', 'xl', '2xl', '3xl', '4xl', '5xl'] as $size)
-                                <option value="{{ $size }}">{{ strtoupper($size) }}</option>
-                            @endforeach
                         </select>
                     </td>
                     <td>
@@ -214,6 +208,27 @@
                 initializeSelect2($('.select-product').last());
                 $('.js-example-basic-single').select2({
                     width: '100%'
+                });
+
+                $('.select-product').last().on('select2:select', function(e) {
+                    var data = e.params.data;
+                    var tr = $(this).closest('tr');
+                    var sizeDropdown = tr.find('select[name="size[]"]');
+
+                    $.ajax({
+                        url: `${urlRoot}/api/products/${data.id}`,
+                        type: 'GET',
+                        success: function(response) {
+                            sizeDropdown.empty();
+                            sizeDropdown.append(
+                                `<option value="">Pilih Ukuran</option>`);
+                            response.forEach(function(size) {
+                                sizeDropdown.append(
+                                    `<option value="${size.size}">${size.size}</option>`
+                                );
+                            });
+                        }
+                    });
                 });
             });
 
@@ -249,6 +264,26 @@
                     width: '100%'
                 });
             }
+
+            $('.select-product').on('select2:select', function(e) {
+                var data = e.params.data;
+                var tr = $(this).closest('tr');
+                var sizeDropdown = tr.find('select[name="size[]"]');
+
+                $.ajax({
+                    url: `${urlRoot}/api/products/${data.id}`,
+                    type: 'GET',
+                    success: function(response) {
+                        sizeDropdown.empty();
+                        sizeDropdown.append(`<option value="">Pilih Ukuran</option>`);
+                        response.forEach(function(size) {
+                            sizeDropdown.append(
+                                `<option value="${size.size}">${size.size}</option>`
+                            );
+                        });
+                    }
+                });
+            });
         });
     </script>
 @endsection

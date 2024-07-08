@@ -23,12 +23,16 @@ use Illuminate\Support\Facades\Artisan;
 
 # ------ Unauthenticated routes ------ #
 Route::get('/', [AuthenticatedSessionController::class, 'create']);
-Route::get('/optimize', function(){
+Route::get('/optimize', function () {
     Artisan::call('optimize:clear');
     return redirect('/scaninvoice');
 });
-Route::get('/migrate', function(){
+Route::get('/migrate', function () {
     Artisan::call('migrate');
+    return back();
+});
+Route::get('/seed-product-detail', function () {
+    Artisan::call('db:seed --class=ProductDetailSeeder');
     return back();
 });
 Route::get('/scaninvoice', [RouteController::class, 'scan'])->name('scan.index');
@@ -37,14 +41,14 @@ Route::post('/scaninvoice', [RouteController::class, 'scanStore'])->name('scan.s
 Route::get('/scan', [RouteController::class, 'scanPengiriman'])->name('scan-pengiriman.index');
 Route::post('/scan', [RouteController::class, 'scanPengirimanStore'])->name('scan-pengiriman.store');
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 
 # ------ Authenticated routes ------ #
-Route::middleware('auth')->group(function() {
+Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [RouteController::class, 'dashboard'])->name('home'); # dashboard
 
-    Route::prefix('profile')->group(function(){
+    Route::prefix('profile')->group(function () {
         Route::get('/', [ProfileController::class, 'myProfile'])->name('profile');
         Route::put('/change-ava', [ProfileController::class, 'changeFotoProfile'])->name('change-ava');
         Route::put('/change-profile', [ProfileController::class, 'changeProfile'])->name('change-profile');

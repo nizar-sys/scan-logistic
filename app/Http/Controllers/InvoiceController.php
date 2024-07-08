@@ -184,7 +184,7 @@ class InvoiceController extends Controller
     public function print($invoice_number)
     {
         $invoice = Invoice::where('invoice_number', $invoice_number)
-            ->with('details:id,invoice_id,product_id,size,quantity', 'details.product:id,code,name,image')
+            ->with('details:id,invoice_id,product_id,size,quantity,availability', 'details.product:id,code,name,image')
             ->firstOrFail();
         $invoice->update(['status_print' => 1]);
 

@@ -94,7 +94,7 @@
                         <br>
                         <ul style="list-style: none; padding: 0;">
                             <li>{{ $detail->product->name }}</li>
-                            <li>{{ strtoupper($detail->size) }}</li>
+                            <li>{{ strtoupper($detail->size) }} <small>({{ $detail->availability }})</small></li>
                             <li>{{ $detail->quantity }}</li>
                         </ul>
                     </td>

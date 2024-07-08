@@ -214,7 +214,7 @@
                 <div class="flex-container dropdown-group">
                     <!-- Nama Baju Dropdown -->
                     <div class="flex-item wide">
-                        <select class="js-example-basic-single" height="100" name="product_id[]" id="product_id_1">
+                        <select class="choose-product" height="100" name="product_id[]" id="product_id_1">
                             <option value="">Pilih Nama Baju</option>
                             @foreach ($products as $product)
                                 <option value="{{ $product->id }}">{{ $product->name }}</option>
@@ -222,13 +222,10 @@
                         </select>
                     </div>
 
-                    <!-- Size Dropdown -->
+                    <!-- Ukuran Dropdown -->
                     <div class="flex-item">
                         <select name="size[]" id="size_1">
-                            <option value="">Pilih Size</option>
-                            @foreach (['s', 'm', 'l', 'xl', '2xl', '3xl', '4xl', '5xl'] as $size)
-                                <option value="{{ $size }}">{{ strtoupper($size) }}</option>
-                            @endforeach
+                            <option value="">Pilih Ukuran</option>
                         </select>
                     </div>
 
@@ -265,7 +262,7 @@
             const hamburguer = document.getElementById("burger-menu")
             const navMenu = document.querySelector(".list-nav-bar")
             const urlRoot = "https://dowear.dimas.co.id";
-
+            // const urlRoot = "{{ url('/') }}";
 
             hamburguer.addEventListener("click", () => {
                 navMenu.classList.toggle("active")
@@ -286,36 +283,37 @@
                 group.id = `group_${groupId}`;
 
                 group.innerHTML = `
-        <div class="flex-item wide">
-            <select class="js-example-basic-single" height="100" name="product_id[]" id="product_id_${groupId}">
-                <option value="">Pilih Nama Baju</option>
-                @foreach ($products as $product)
-                    <option value="{{ $product->id }}">{{ $product->name }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="flex-item">
-            <select name="size[]" id="size_${groupId}">
-                <option value="">Pilih Size</option>
-                @foreach (['s', 'm', 'l', 'xl', '2xl', '3xl', '4xl', '5xl'] as $size)
-                    <option value="{{ $size }}">{{ strtoupper($size) }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="flex-item">
-            <select name="qty[]" id="qty_${groupId}">
-                <option value="">Pilih Qty</option>
-                @for ($i = 1; $i <= 50; $i++)
-                    <option value="{{ $i }}">{{ $i }}</option>
-                @endfor
-            </select>
-        </div>
-        <button type="button" class="minus-button" data-group-id="${groupId}">-</button>
-    `;
+                    <div class="flex-item wide">
+                        <select class="choose-product" height="100" name="product_id[]" id="product_id_${groupId}">
+                            <option value="">Pilih Nama Baju</option>
+                            @foreach ($products as $product)
+                                <option value="{{ $product->id }}">{{ $product->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="flex-item">
+                        <select name="size[]" id="size_${groupId}">
+                            <option value="">Pilih Ukuran</option>
+                        </select>
+                    </div>
+                    <div class="flex-item">
+                        <select name="qty[]" id="qty_${groupId}">
+                            <option value="">Pilih Qty</option>
+                            @for ($i = 1; $i <= 50; $i++)
+                                <option value="{{ $i }}">{{ $i }}</option>
+                            @endfor
+                        </select>
+                    </div>
+                    <button type="button" class="minus-button" data-group-id="${groupId}">-</button>
+                `;
 
                 container.appendChild(group);
 
                 $(`#product_id_${groupId}`).select2();
+
+                $(`#product_id_${groupId}`).on('change', function() {
+                    getSizeQty($(this).val(), groupId);
+                });
             }
 
             function removeDropdownGroup(id) {
@@ -396,6 +394,8 @@
                         if (navigator.vibrate) {
                             navigator.vibrate([100, 50, 100, 50, 100]);
                         }
+
+                        handleReset();
                     },
                     error: function(xhr) {
                         if (xhr.status == 422) {
@@ -415,6 +415,8 @@
                             showSnackbar('Terjadi kesalahan, silahkan coba lagi ' + xhr.status + ' ' +
                                 xhr.statusText, '#dc3545', 'error');
                         }
+
+                        handleReset();
                     }
                 });
             }
@@ -440,6 +442,9 @@
                 for (let i = 1; i <= groupId; i++) {
                     if (document.getElementById(`product_id_${i}`) || document.getElementById(
                             `size_${i}`) || document.getElementById(`qty_${i}`)) {
+                        // destroy select2
+                        $(`#product_id_${i}`).select2('destroy');
+                        $(`#product_id_${i}`).val('').select2();
                         document.getElementById(`product_id_${i}`).value = '';
                         document.getElementById(`size_${i}`).value = '';
                         document.getElementById(`qty_${i}`).value = '';
@@ -496,10 +501,54 @@
                     removeDropdownGroup(`group_${e.target.getAttribute('data-group-id')}`);
                 }
             });
-        })
+
+            function getSizeQty(productId, groupId) {
+                var sizeDropdown = $(`#size_${groupId}`);
+                $.ajax({
+                    url: urlRoot + `/api/products/${productId}`,
+                    type: "GET",
+                    success: function(response) {
+                        console.log(response);
+                        sizeDropdown.empty();
+                        sizeDropdown.append('<option value="">Pilih Ukuran</option>');
+                        response.forEach(function(size) {
+                            sizeDropdown.append(
+                                `<option value="${size.size}">${size.size}</option>`);
+                        });
+                    },
+                    error: function(xhr) {
+                        console.log(xhr);
+                    }
+                });
+            }
+        });
 
         $(document).ready(function() {
-            $('.js-example-basic-single').select2();
+            $('.choose-product').select2();
+
+            $('.choose-product').on('change', function() {
+                var productId = $(this).val();
+                var groupId = $(this).attr('id').split('_')[2];
+                // const urlRoot = "{{ url('/') }}";
+                const urlRoot = "https://dowear.dimas.co.id";
+                var sizeDropdown = $(`#size_${groupId}`);
+
+                $.ajax({
+                    url: urlRoot + `/api/products/${productId}`,
+                    type: "GET",
+                    success: function(response) {
+                        sizeDropdown.empty();
+                        sizeDropdown.append('<option value="">Pilih Ukuran</option>');
+                        response.forEach(function(size) {
+                            sizeDropdown.append(
+                                `<option value="${size.size}">${size.size}</option>`);
+                        });
+                    },
+                    error: function(xhr) {
+                        console.log(xhr);
+                    }
+                });
+            });
         });
     </script>
 </body>

@@ -198,4 +198,11 @@ class ProductController extends Controller
 
         return response()->json($products);
     }
+
+    public function productDetail($productId)
+    {
+        $product = ProductDetail::where('product_id', $productId)->get(['id', 'product_id', 'size', 'quantity']);
+
+        return response()->json($product);
+    }
 }

@@ -77,7 +77,7 @@
                                                     name="product_detail[quantity][]" required>
                                             </td>
                                             <td>
-                                                <button type="button" class="btn btn-danger remove-row"><i
+                                                <button type="button" class="btn btn-danger btn-sm remove-row"><i
                                                         class="fas fa-trash"></i></button>
                                             </td>
                                         </tr>
@@ -125,7 +125,7 @@
                             <input type="number" class="form-control" placeholder="Stok Produk" name="product_detail[quantity][]" required>
                         </td>
                         <td>
-                            <button type="button" class="btn btn-danger remove-row"><i class="fas fa-trash"></i></button>
+                            <button type="button" class="btn btn-danger btn-sm remove-row"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>
                 `;

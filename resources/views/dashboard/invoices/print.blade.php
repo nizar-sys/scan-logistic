@@ -90,7 +90,13 @@
                         <tr>
                     @endif
                     <td style="text-align: left;">
-                        <img src="@imageToBase64('uploads/images/' . $detail->product->image)" width="200">
+                        @if (file_exists(asset('uploads/images/' . $detail->product->image)))
+                            <img src="@imageToBase64('uploads/images/' . $detail->product->image)" width="200">
+                        @else
+                            <p style="color: red; font-size: 10px">
+                                Produk tidak memiliki gambar
+                            </p>
+                        @endif
                         <br>
                         <ul style="list-style: none; padding: 0;">
                             <li>{{ $detail->product->name }}</li>

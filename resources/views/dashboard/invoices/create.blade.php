@@ -164,8 +164,8 @@
 
 @section('script')
     <script>
-        // const urlRoot = "https://dowear.dimas.co.id";
-        const urlRoot = "{{ url('/') }}";
+        const urlRoot = "https://dowear.dimas.co.id";
+        // const urlRoot = "{{ url('/') }}";
     </script>
     <script>
         $(document).ready(function() {
